@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hezhe.security.distributed.uaa.mapper.UserMapper">
+    <insert id="insertSelective">
+        insert into t_user
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            <if test="username != null">
+                username,
+            </if>
+            <if test="password != null">
+                password,
+            </if>
+            <if test="state != null">
+                state,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id,jdbcType=INTEGER},
+            </if>
+            <if test="username != null">
+                #{username,jdbcType=VARCHAR},
+            </if>
+            <if test="password != null">
+                #{password,jdbcType=VARCHAR},
+            </if>
+            <if test="state != null">
+                #{state,jdbcType=INTEGER},
+            </if>
+        </trim>
+    </insert>
+    <insert id="insertUser" useGeneratedKeys="true" keyProperty="id">
+        insert into t_user(username,password,state) values (#{username},#{password},#{state})
+    </insert>
+
+    <insert id="insertUserRole">
+        insert into t_user_role(uid,rid) values (#{userId},#{roleName})
+    </insert>
+    <delete id="deleteUserById">
+        delete from t_user
+        where id in
+        <foreach close=")" collection="ids" item="id" open="(" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="deleteUserRoleByUid">
+        delete from t_user_role
+        where uid in
+        <foreach close=")" collection="ids" item="id" open="(" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="getUserByUsername" resultType="com.hezhe.security.distributed.uaa.model.User">
+        select * from t_user where username = #{username}
+    </select>
+
+    <select id="getUserByName" resultType="com.hezhe.security.distributed.uaa.model.User">
+        select *
+        from t_user
+        where 1 = 1
+        <if test="userLikeName != null">
+            and username like concat(concat("%",#{userLikeName}),"%")
+        </if>
+    </select>
+
+    <select id="getAllPagerUser" resultType="com.hezhe.security.distributed.uaa.model.User">
+        select u.id,u.username,u.password,u.state,r.role_name
+        from t_user u , t_role r , t_user_role ur
+        where u.id = ur.uid and r.id = ur.rid
+    </select>
+
+    <update id="updateSelective">
+        update t_user
+        <set>
+            <if test="username != null and username != ''">
+                username = #{username},
+            </if>
+            <if test="password != null and password != ''">
+                password = #{password},
+            </if>
+            <if test="state != ''">
+                state = #{state},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+    <update id="userEditData">
+        update t_user
+        <set>
+            <if test="username != null and username != ''">
+                username = #{username},
+            </if>
+            <if test="password != null and password != ''">
+                password = #{password},
+            </if>
+            <if test="state != null and state !=''">
+                state = #{state},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <update id="updateUserRole">
+        update t_user_role
+        <set>
+            <if test="userId != ''">
+                uid = #{userId},
+            </if>
+            <if test="roleId != ''">
+                rid = #{roleId},
+            </if>
+        </set>
+        where uid = #{userId}
+    </update>
+</mapper>

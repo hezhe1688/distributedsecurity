@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hezhe.security.distributed.uaa.mapper.RoleMapper">
+    <resultMap id="BaseResultMap" type="com.hezhe.security.distributed.uaa.model.Role">
+        <result column="id" jdbcType="INTEGER" property="id"/>
+        <result column="role_name" jdbcType="VARCHAR" property="roleName"/>
+        <result column="code" jdbcType="VARCHAR" property="code"/>
+    </resultMap>
+
+    <resultMap id="BaseResultPermissionMap" type="com.hezhe.security.distributed.uaa.model.Role">
+        <result column="id" jdbcType="INTEGER" property="id"/>
+        <result column="role_name" jdbcType="VARCHAR" property="roleName"/>
+        <result column="code" jdbcType="VARCHAR" property="code"/>
+        <collection property="permissions" ofType="com.hezhe.security.distributed.uaa.model.Permission">
+            <result column="id" jdbcType="INTEGER" property="id"/>
+            <result column="permission_name" jdbcType="VARCHAR" property="permissionName"/>
+            <result column="url" jdbcType="VARCHAR" property="url"/>
+        </collection>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hezhe.security.distributed.uaa.model.Role">
+        insert into t_role (id, role_name, code
+          )
+        values (#{id,jdbcType=INTEGER}, #{roleName,jdbcType=VARCHAR}, #{code,jdbcType=VARCHAR}
+          )
+    </insert>
+
+    <insert id="insertSelective" parameterType="com.hezhe.security.distributed.uaa.model.Role">
+        insert into t_role
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            <if test="roleName != null">
+                role_name,
+            </if>
+            <if test="code != null">
+                code,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id,jdbcType=INTEGER},
+            </if>
+            <if test="roleName != null">
+                #{roleName,jdbcType=VARCHAR},
+            </if>
+            <if test="code != null">
+                #{code,jdbcType=VARCHAR},
+            </if>
+        </trim>
+    </insert>
+
+    <insert id="insertRole" useGeneratedKeys="true" keyProperty="id">
+        insert into t_role (role_name) values (#{roleName})
+    </insert>
+
+    <insert id="insertRolePermission">
+        insert into t_role_permission(rid,pid) values (#{rid},#{pid})
+    </insert>
+
+    <delete id="deleteRoleById">
+        delete from t_role
+        where id in
+        <foreach close=")" collection="ids" item="id" open="(" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="deleteRolePermissionByRid">
+        delete from t_role_permission
+        where rid in
+        <foreach close=")" collection="ids" item="id" open="(" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectRoles" resultType="com.hezhe.security.distributed.uaa.model.Role">
+        select * from t_role
+    </select>
+
+    <select id="selectRolePermission" resultMap="BaseResultPermissionMap">
+        select r.id, r.role_name, r.code , p.url from t_role r , t_permission p , t_role_permission rp
+        where r.id = rp.rid and p.id = rp.pid
+    </select>
+
+    <select id="selectRidByUid" resultType="java.lang.Integer">
+        select r.id from t_user u, t_role r ,t_user_role ur
+        where u.id = ur.uid and r.id = ur.rid
+              and u.id = #{uid}
+    </select>
+</mapper>
