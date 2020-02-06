@@ -16,7 +16,11 @@ import org.springframework.security.oauth2.provider.code.AuthorizationCodeServic
 import org.springframework.security.oauth2.provider.code.InMemoryAuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
+import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
 import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableAuthorizationServer
@@ -29,15 +33,20 @@ public class AuthorizationServer extends AuthorizationServerConfigurerAdapter {
     private AuthorizationCodeServices authorizationCodeServices;
 
     @Autowired
+    private JwtAccessTokenConverter jwtAccessTokenConverter;
+
+    @Autowired
     private AuthenticationManager authenticationManager;
 
     @Autowired
     private ClientDetailsService clientDetailsService;
 
+    //验证码模式，采用内存方式
     @Bean
     public AuthorizationCodeServices authorizationCodeServices() {
         return new InMemoryAuthorizationCodeServices();
     }
+
 
     // 配置客户端详细信息
     @Override
@@ -52,11 +61,9 @@ public class AuthorizationServer extends AuthorizationServerConfigurerAdapter {
                 .authorizedGrantTypes("authorization_code", "password", "client_credentials", "implicit", "refresh_token")
                 // 允许授权的范围
                 .scopes("all")
-                //
                 .autoApprove(false)  // false 跳转到授权页面
                 // 加上验证回调地址
                 .redirectUris("http://www.baidu.com");
-
     }
 
 
@@ -66,6 +73,10 @@ public class AuthorizationServer extends AuthorizationServerConfigurerAdapter {
         service.setClientDetailsService(clientDetailsService);  // 客户端信息服务
         service.setSupportRefreshToken(true);   // 是否产生刷新令牌
         service.setTokenStore(tokenStore);  // 设置令牌存储策略
+        // 令牌增强
+        TokenEnhancerChain tokenEnhancerChain = new TokenEnhancerChain();
+        tokenEnhancerChain.setTokenEnhancers(Arrays.asList(jwtAccessTokenConverter));
+        service.setTokenEnhancer(tokenEnhancerChain);
         service.setAccessTokenValiditySeconds(7200);// 令牌默认有效期 2 小时
         service.setRefreshTokenValiditySeconds(259200);
         return service;
@@ -79,8 +90,9 @@ public class AuthorizationServer extends AuthorizationServerConfigurerAdapter {
      * /auth/check_token    用户资源服务访问的令牌解析断电
      * /oauth/token_key     提供公有密钥的端点，如果你使用jwt令牌的话
      */
+
     /**
-     * 令牌访问端点
+     * 令怕i访问端点
      *
      * @param endpoints
      * @throws Exception
@@ -96,7 +108,6 @@ public class AuthorizationServer extends AuthorizationServerConfigurerAdapter {
                 .allowedTokenEndpointRequestMethods(HttpMethod.POST); // 允许post提交
     }
 
-
     /**
      * 令牌访问端点的安全策略
      *
@@ -108,6 +119,6 @@ public class AuthorizationServer extends AuthorizationServerConfigurerAdapter {
         security.tokenKeyAccess("permitAll()")         // /oauth/token_key  公开
                 .checkTokenAccess("permitAll()")       // /auth/check_token  检测令牌
                 .allowFormAuthenticationForClients();  // 允许通过表单认证，申请令牌
-        super.configure(security);
+
     }
 }

@@ -1,4 +1,4 @@
-package com.hezhe.security.distributed.uaa.configa;
+package com.hezhe.security.distributed.order.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
